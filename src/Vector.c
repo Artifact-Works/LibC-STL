@@ -11,7 +11,11 @@
 typedef enum {
     VECTOR_SUCCESS,
     VECTOR_FAILURE,
-    VECTOR_OUT_OF_MEMORY
+    VECTOR_OUT_OF_MEMORY,
+    VECTOR_POOL_ALLOCATION_FAILED,
+    VECTOR_NULL_POINTER,
+    VECTOR_REALLOCATION_FAILED
+    VECTOR_INDEX_OUT_OF_BOUNDS
 } VectorStatus;
 
 Vector *vector_create(size_t element_size);
@@ -23,12 +27,6 @@ bool vector_empty(Vector *vec);
 size_t vector_size(Vector *vec);
 size_t vector_capacity(Vector *vec);
 
-
-
-#define VALID_TYPE(t) ((t) == INT || (t) == FLOAT || (t) == CHAR || (t) == STR)
-
-// Compile-time assertion (Ensures invalid types are caught at compile time)
-static_assert(VALID_TYPE(INT), "Invalid type used in vector creation");
 #endif // VECTOR_H
 #define INT 1
 #define FLOAT 2
@@ -44,20 +42,32 @@ typedef struct {
     int type; // Add the type field
 } Vector;
 
-MemoryPool *create_pool(size_t block_size) {
+MemoryPool *create_pool(size_t block_size, VectorStatus *status) {
+    if (block_size == 0) {
+        // if (status) *status = VECTOR_NULL_POINTER;
+        return NULL;
+    }
+
     MemoryPool *pool = (MemoryPool *)malloc(sizeof(MemoryPool));
-    if (!pool) return NULL;
-    
+    if (!pool) {
+        if (status) *status = VECTOR_OUT_OF_MEMORY;
+        return NULL;
+    }
+
     pool->blocks = malloc(block_size);
     if (!pool->blocks) {
         free(pool);
+        if (status) *status = VECTOR_POOL_ALLOCATION_FAILED;
         return NULL;
     }
-    
+
     pool->block_size = block_size;
     pool->used = 0;
+    
+    if (status) *status = VECTOR_SUCCESS;
     return pool;
 }
+
 
 void *pool_alloc(MemoryPool *pool, size_t size) {
     if (pool->used + size > pool->block_size) {
@@ -118,32 +128,47 @@ VectorStatus vector_push_back(Vector *vec, void *element) {
     return VECTOR_SUCCESS;
 }
 
-Vector *create_vector(size_t size, int type) {
-    if (!VALID_TYPE(type)) {
-        fprintf(stderr, "Error: Invalid vector type\n");
-        return NULL;  // Return NULL if an invalid type is passed
+Vector *create_vector(size_t size, size_t element_size, VectorStatus *status) {
+    if (size == 0 || element_size == 0) {
+        if (status) *status = VECTOR_NULL_POINTER;
+        return NULL;
     }
+
     Vector *vec = (Vector *)malloc(sizeof(Vector));
     if (!vec) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
+        if (status) *status = VECTOR_OUT_OF_MEMORY;
         return NULL;
     }
-    vec->element_size = sizeof(type); // Initialize element_size
-    vec->capacity = size > 0 ? size : 4; // Initialize capacity
-    vec->size = 0; // Initialize size
-    vec->type = type; // Initialize type
-    vec->data = malloc(vec->capacity * vec->element_size);
+
+    vec->size = 0;
+    vec->capacity = size;
+    vec->element_size = element_size;
+    vec->data = malloc(size * element_size);
+
     if (!vec->data) {
         free(vec);
+        if (status) *status = VECTOR_OUT_OF_MEMORY;
         return NULL;
     }
+
+    if (status) *status = VECTOR_SUCCESS;
     return vec;
 }
 
-void *vector_at(Vector *vec, size_t index) {
-    if (!vec || index >= vec->size) return NULL;
+
+void *vector_at(Vector *vec, size_t index, VectorStatus *status) {
+    if (!vec) {
+        if (status) *status = VECTOR_NULL_POINTER;
+        return NULL;
+    }
+    if (index >= vec->size) {
+        if (status) *status = VECTOR_INDEX_OUT_OF_BOUNDS;
+        return NULL;
+    }
+    if (status) *status = VECTOR_SUCCESS;
     return (char *)vec->data + index * vec->element_size;
 }
+
 
 bool vector_empty(Vector *vec) {
     return vec->size == 0;
@@ -155,24 +180,4 @@ size_t vector_size(Vector *vec) {
 
 size_t vector_capacity(Vector* vector){
     return vector->capacity;
-}
-
-int push_back_int(Vector *vec, int value) {
-    if (!vec) return ERR_NULL_POINTER;
-    if (vec->type != INT) return ERR_INVALID_TYPE;
-    // Logic to push back an int
-    return SUCCESS;
-}
-
-int push_back_float(Vector *vec, float value) {
-    if (!vec) return ERR_NULL_POINTER;
-    if (vec->type != FLOAT) return ERR_INVALID_TYPE;
-    // Logic to push back a float
-    return SUCCESS;
-}
-
-int push_back_double(Vector *vec, double value) {
-    if (!vec) return ERR_NULL_POINTER;
-    if (vec->type != DOUBLE) return ERR_INVALID_TYPE;
-    return SUCCESS;
 }
