@@ -1,0 +1,11 @@
+#ifndef ERROR_CODES_H
+#define ERROR_CODES_H
+
+#define SUCCESS 1
+#define FAILURE 0
+#define ERR_INVALID_TYPE -1
+#define ERR_OUT_OF_MEMORY -2
+#define ERR_INDEX_OUT_OF_BOUNDS -3
+#define ERR_NULL_POINTER -4
+
+#endif // ERROR_CODES_H

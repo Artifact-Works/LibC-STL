@@ -6,6 +6,22 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include "error_codes.h"
+
+#ifndef VECTOR_H
+#define VECTOR_H
+
+#include <stdio.h>
+#include "error_codes.h"
+
+#ifdef DEBUG
+    #define DEBUG_PRINT(msg) printf("DEBUG: %s\n", msg)
+#else
+    #define DEBUG_PRINT(msg)
+#endif
+
+#endif // VECTOR_H
+
 
 #define VECTOR_POOL_BLOCK_SIZE 1024
 

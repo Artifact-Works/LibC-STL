@@ -104,6 +104,33 @@ int main()
 
 
 ```
+## Error Handling
+
+All functions that modify vectors return predefined error codes.  
+
+| Error Code         | Description                          |
+|--------------------|----------------------------------|
+| `SUCCESS (1)`     | Operation successful              |
+| `FAILURE (0)`     | Generic failure                  |
+| `ERR_INVALID_TYPE (-1)` | Invalid data type for vector  |
+| `ERR_OUT_OF_MEMORY (-2)` | Memory allocation failed     |
+| `ERR_INDEX_OUT_OF_BOUNDS (-3)` | Index out of range     |
+| `ERR_NULL_POINTER (-4)` | Null pointer detected        |
+
+### Example Usage:
+```c
+Vector *vec = create_vector(5, INT);
+if (!vec) {
+    printf("Error: Vector creation failed\n");
+}
+
+int status = push_back_int(vec, 10);
+if (status != SUCCESS) {
+    printf("Error: push_back_int failed with error code %d\n", status);
+}
+yaml
+Copy
+Edit
 
 ## Feedback and Support
 If you have any feedback, suggestions, or questions regarding the project, please feel free to open an issue.
